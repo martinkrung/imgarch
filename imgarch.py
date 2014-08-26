@@ -16,7 +16,8 @@ def setup_parser():
 	parser.add_option("-c", "--correctdate", dest="correctdate", action="store_true",  help=" ")
 	parser.add_option("-s", "--shif", dest="shift",help="shift EXIF timestamp in h: e.g -1, 1 ")
 	parser.add_option("-f", "--filedate", dest="filedate", action="store_true", help="Set Exif timestamp to file modification timestamp")
-	parser.add_option("-e", "--exifdate", dest="exifdate", action="store_true", help="se File Modification timestamp to Exif timestamp")
+	parser.add_option("-e", "--exifdate", dest="exifdate", action="store_true", help="Set File Modification timestamp to Exif timestamp")
+	parser.add_option("-m", "--mov", dest="mov", action="store_true", help="Set File Modification timestamp to File Name")
 
 	parser.add_option("-b", "--beautify ", dest="beautify", action="store_true", help=" make nice names")
 	
@@ -37,7 +38,7 @@ class imgarch:
 	
 	def __init__(self):
 		self.format = '%Y%m%d-%H%M%S'
-		self.suffixmv = ('MOV','mov', 'avi', 'AVI')
+		self.suffixmv = ('MOV','mov', 'avi', 'AVI', 'MTS')
 		self.suffixjpg = ('JPG','jpg', 'THM', 'thm','CR2', 'cr2')
 
 		self.pair = {}
@@ -152,6 +153,14 @@ class imgarch:
 			print '%s: exifdate (%s)'   %(f, datetimeoriginal)
 
 	def renameMov(self):
+			
+		for n in glob.glob('*.MOV'):
+			suffix = n.split('.')[1].lower()
+			filename = self.getCommandOutput('date -r %s +%s'  % (n, self.format) ).strip()
+			filename = '%s.%s'  % (filename, suffix)
+			print '%s --> %s'   %(n, filename)
+			os.rename(n, filename)
+
 		for n in glob.glob('*.THM'):
 			stdout = self.getCommandOutput('jhead -n%s %s' % (self.format, n))
 			print stdout
@@ -163,7 +172,6 @@ class imgarch:
 				os.rename(original.split('.')[0]+'.MOV', target.split('.')[0]+'.mov')
 			if	os.path.isfile(original.split('.')[0]+'.AVI'):		
 				os.rename(original.split('.')[0]+'.AVI', target.split('.')[0]+'.avi')
-			
 			
 	def renameJpg(self):
 				stdout = self.getCommandOutput('jhead -n%s %s' % (self.format, '*'))
@@ -212,6 +220,10 @@ def main():
 		ia.renameMov()
 		ia.renameJpg()
 		exit
+
+	if opt.mov:
+		ia.renameMov()
+		exit	
 
 	if opt.filedate:
 		print opt.filedate
